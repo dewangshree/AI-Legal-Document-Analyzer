@@ -31,22 +31,36 @@ logger = logging.getLogger(__name__)
 
 # ── spaCy lazy-load ───────────────────────────────────────────────────────────
 
-_nlp = None  # loaded on first use
+_nlp = None          # loaded on first use
+_model_available = None   # tri-state: None=unchecked, True=ok, False=missing
 
 def _get_nlp():
-    global _nlp
-    if _nlp is None:
-        try:
-            import spacy
-            _nlp = spacy.load("en_core_web_sm")
-            logger.info("spaCy model 'en_core_web_sm' loaded.")
-        except OSError:
-            logger.warning(
-                "spaCy model 'en_core_web_sm' not found. "
-                "Run: python -m spacy download en_core_web_sm"
-            )
-            _nlp = None
+    global _nlp, _model_available
+    if _model_available is not None:
+        return _nlp  # already resolved
+    try:
+        import spacy
+        _nlp = spacy.load("en_core_web_sm")
+        _model_available = True
+        logger.info("spaCy model 'en_core_web_sm' loaded successfully.")
+    except OSError:
+        _model_available = False
+        logger.warning(
+            "spaCy model 'en_core_web_sm' not found. "
+            "Run: python -m spacy download en_core_web_sm"
+        )
+        _nlp = None
+    except Exception as exc:
+        _model_available = False
+        logger.error("spaCy failed to load: %s", exc)
+        _nlp = None
     return _nlp
+
+
+def is_nlp_available() -> bool:
+    """Return True if the spaCy model is loaded and ready."""
+    _get_nlp()   # trigger resolution
+    return bool(_model_available)
 
 
 # ── Clause classification patterns ────────────────────────────────────────────
