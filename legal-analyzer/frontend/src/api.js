@@ -1,7 +1,7 @@
 import axios from 'axios'
 
 const api = axios.create({
-  baseURL: 'http://localhost:8000',
+  baseURL: 'https://ai-legal-document-analyzer-642b.onrender.com',
   timeout: 120_000, // 2 min — LLM calls can take a moment
 })
 
